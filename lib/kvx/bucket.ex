@@ -85,8 +85,12 @@ defmodule KVX.Bucket do
         @adapter.delete(bucket, key)
       end
 
-      def flush!(bucket) do
-        @adapter.flush!(bucket)
+      def delete(bucket) do
+        @adapter.delete(bucket)
+      end
+
+      def flush(bucket) do
+        @adapter.flush(bucket)
       end
     end
   end
@@ -107,7 +111,7 @@ defmodule KVX.Bucket do
 
   @doc """
   Store this data, only if it does not already exist. If an item already
-  exists and an add fails with an exception.
+  exists and an add fails with a `KVX.ConflictError` exception.
 
   If `bucket` doesn't exist, it will raise an argument error.
 
@@ -193,13 +197,24 @@ defmodule KVX.Bucket do
   defcallback delete(bucket, key) :: bucket
 
   @doc """
+  Deletes an entire bucket, if it exists.
+
+  If `bucket` doesn't exist, it will raise an argument error.
+
+  ## Example
+
+      MyBucket.delete(:mybucket)
+  """
+  defcallback delete(bucket) :: bucket
+
+  @doc """
   Invalidate all existing cache items.
 
   If `bucket` doesn't exist, it will raise an argument error.
 
   ## Example
 
-      MyBucket.flush!(:mybucket)
+      MyBucket.flush(:mybucket)
   """
-  defcallback flush!(bucket) :: bucket
+  defcallback flush(bucket) :: bucket
 end

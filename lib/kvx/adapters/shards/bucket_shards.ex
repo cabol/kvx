@@ -8,11 +8,28 @@ defmodule KVX.Bucket.Shards do
     * `:shards_mod` - internal Shards module to use. By default, `:shards`
        module is used, which is a wrapper on top of `:shards_local` and
        `:shards_dist`.
+    * `:buckets` - this can be used to set bucket options in config,
+      so it can be loaded when the bucket is created. See example below.
 
   Run-time options when calling `new/2` function, are the same as
   `shards:new/2`. For example:
 
       MyModule.new(:mybucket, [n_shards: 4])
+
+  ## Example:
+
+      config :kvx,
+        adapter: KVX.Bucket.Shards,
+        ttl: 43200,
+        shards_mod: :shards,
+        buckets: [
+          mybucket1: [
+            n_shards: 4
+          ],
+          mybucket2: [
+            n_shards: 8
+          ]
+        ]
 
   For more information about `shards`:
 
@@ -29,7 +46,7 @@ defmodule KVX.Bucket.Shards do
 
   ## Setup Commands
 
-  def new(bucket, opts \\ []) do
+  def new(bucket, opts \\ []) when is_atom(bucket) do
     case Process.whereis(bucket) do
       nil -> new_bucket(bucket, opts)
       _   -> bucket
@@ -37,9 +54,16 @@ defmodule KVX.Bucket.Shards do
   end
 
   defp new_bucket(bucket, opts) do
-    {^bucket, _} = @shards.new(bucket, opts)
-    bucket
+    opts = maybe_get_bucket_opts(bucket, opts)
+    @shards.new(bucket, opts)
   end
+
+  defp maybe_get_bucket_opts(bucket, []) do
+    :kvx
+    |> Application.get_env(:buckets, [])
+    |> Keyword.get(bucket, [])
+  end
+  defp maybe_get_bucket_opts(_, opts), do: opts
 
   ## Storage Commands
 
@@ -116,10 +140,19 @@ defmodule KVX.Bucket.Shards do
     bucket
   end
 
-  def flush!(bucket) do
+  def delete(bucket) do
+    true = @shards.delete(bucket)
+    bucket
+  end
+
+  def flush(bucket) do
     true = @shards.delete_all_objects(bucket)
     bucket
   end
+
+  ## Extended functions
+
+  def __shards_mod__, do: @shards
 
   ## Private functions
 
