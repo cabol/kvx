@@ -20,7 +20,6 @@ defmodule KVX.Bucket.ShardsTest do
         |> find_all
       end
     end
-    :ok
   end
 
   test "default config" do
@@ -83,6 +82,10 @@ defmodule KVX.Bucket.ShardsTest do
   end
 
   test "ttl test" do
+    assert_raise ArgumentError, fn ->
+      set(@bucket, :k1, 1, :foo)
+    end
+
     @bucket
     |> mset([k1: 1, k2: 2, k3: 3], 2)
     |> set(:k4, 4, 3)

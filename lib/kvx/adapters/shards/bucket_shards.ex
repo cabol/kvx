@@ -40,7 +40,7 @@ defmodule KVX.Bucket.Shards do
   @behaviour KVX.Bucket
 
   @shards (Application.get_env(:kvx, :shards_mod, :shards))
-  @default_ttl (Application.get_env(:kvx, :ttl, 3600))
+  @default_ttl (Application.get_env(:kvx, :ttl, :infinity))
 
   require Ex2ms
 
@@ -75,15 +75,12 @@ defmodule KVX.Bucket.Shards do
   end
 
   def set(bucket, key, value, ttl \\ @default_ttl) do
-    ttl = if is_integer(ttl) do
-      seconds_since_epoch(ttl)
-    end
-    true = @shards.insert(bucket, {key, value, ttl})
+    true = @shards.insert(bucket, {key, value, seconds_since_epoch(ttl)})
     bucket
   end
 
-  def mset(bucket, kv_pairs, ttl \\ @default_ttl) when is_list(kv_pairs) do
-    kv_pairs |> Enum.each(fn({key, value}) ->
+  def mset(bucket, entries, ttl \\ @default_ttl) when is_list(entries) do
+    entries |> Enum.each(fn({key, value}) ->
       ^bucket = set(bucket, key, value, ttl)
     end)
     bucket
@@ -94,12 +91,11 @@ defmodule KVX.Bucket.Shards do
   def get(bucket, key) do
     case @shards.lookup(bucket, key) do
       [{^key, value, ttl}] ->
-        case ttl > seconds_since_epoch(0) do
-          true ->
-            value
-          _ ->
-            true = @shards.delete(bucket, key)
-            nil
+        if ttl > seconds_since_epoch(0) do
+          value
+        else
+          true = @shards.delete(bucket, key)
+          nil
         end
       _ ->
         nil
@@ -117,7 +113,7 @@ defmodule KVX.Bucket.Shards do
   end
 
   defp do_find_all(bucket, nil) do
-    find_all(bucket, Ex2ms.fun do object -> object end)
+    do_find_all(bucket, Ex2ms.fun do object -> object end)
   end
   defp do_find_all(bucket, query) do
     bucket
@@ -154,10 +150,14 @@ defmodule KVX.Bucket.Shards do
 
   def __shards_mod__, do: @shards
 
+  def __default_ttl__, do: @default_ttl
+
   ## Private functions
 
-  defp seconds_since_epoch(diff) do
+  defp seconds_since_epoch(diff) when is_integer(diff) do
     {mega, secs, _} = :os.timestamp()
     mega * 1000000 + secs + diff
   end
+  defp seconds_since_epoch(:infinity), do: :infinity
+  defp seconds_since_epoch(diff), do: raise ArgumentError, "ttl #{inspect diff} is invalid."
 end

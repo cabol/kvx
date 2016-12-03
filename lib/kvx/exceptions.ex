@@ -1,20 +1,3 @@
-defmodule KVX.BucketError do
-  @moduledoc """
-  Raised at runtime when the bucket is invalid.
-  """
-  defexception [:message]
-
-  def exception(opts) do
-    bucket = Keyword.fetch!(opts, :bucket)
-
-    msg = """
-    Unexisting bucket #{bucket}.
-    """
-
-    %__MODULE__{message: msg}
-  end
-end
-
 defmodule KVX.ConflictError do
   defexception [:message]
 

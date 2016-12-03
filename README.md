@@ -12,7 +12,7 @@ Add `kvx` to your Mix dependencies:
 
 ```elixir
 defp deps do
-  [{:kvx, "~> 0.1.1"}]
+  [{:kvx, "~> 0.1.2"}]
 end
 ```
 
@@ -240,7 +240,7 @@ defmodule MyApp.CacheableRepo do
       {:ok, schema} = rs ->
         schema
         |> bucket
-        |> Cache.del(schema.id)
+        |> Cache.delete(schema.id)
         rs
       error ->
         error

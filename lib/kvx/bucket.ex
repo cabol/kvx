@@ -35,15 +35,15 @@ defmodule KVX.Bucket do
   @type bucket :: atom
   @type key    :: term
   @type value  :: term
-  @type ttl    :: integer
+  @type ttl    :: integer | :infinity
 
   @doc false
   defmacro __using__(_opts) do
     quote do
       @behaviour KVX.Bucket
 
-      @adapter (Application.get_env(:exshards, :adapter, KVX.Bucket.Shards))
-      @default_ttl (Application.get_env(:kvx, :ttl, 3600))
+      @adapter (Application.get_env(:kvx, :adapter, KVX.Bucket.Shards))
+      @default_ttl (Application.get_env(:kvx, :ttl, :infinity))
 
       def __adapter__ do
         @adapter
