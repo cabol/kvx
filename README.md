@@ -200,7 +200,7 @@ defmodule MyApp.CacheableRepo do
       {:ok, schema} = rs ->
         schema
         |> bucket
-        |> Cache.del(schema.id)
+        |> Cache.delete(schema.id)
         rs
       error ->
         error
@@ -211,7 +211,7 @@ defmodule MyApp.CacheableRepo do
     rs = Repo.insert!(struct, opts)
     rs
     |> bucket
-    |> Cache.del(rs.id)
+    |> Cache.delete(rs.id)
     rs
   end
 
@@ -251,7 +251,7 @@ defmodule MyApp.CacheableRepo do
     rs = Repo.delete!(struct, opts)
     rs
     |> bucket
-    |> Cache.del(rs.id)
+    |> Cache.delete(rs.id)
     rs
   end
 
