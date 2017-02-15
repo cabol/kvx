@@ -5,7 +5,9 @@
 
 **Closed issues:**
 
+- Add travis-ci support [\#6](https://github.com/cabol/kvx/issues/6)
 - Migrate from `shards` to `ex\_shards` [\#5](https://github.com/cabol/kvx/issues/5)
+- Add specs to public/API functions [\#2](https://github.com/cabol/kvx/issues/2)
 
 ## [v0.1.2](https://github.com/cabol/kvx/tree/v0.1.2) (2016-12-04)
 [Full Changelog](https://github.com/cabol/kvx/compare/v0.1.1...v0.1.2)

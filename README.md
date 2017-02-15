@@ -1,4 +1,4 @@
-# KVX
+# KVX [![Build Status](https://travis-ci.org/cabol/kvx.svg?branch=master)](https://travis-ci.org/cabol/kvx)
 
 This is a simple/basic in-memory Key/Value Store written in [**Elixir**](http://elixir-lang.org/)
 and using [**ExShards**](https://github.com/cabol/ex_shards) as default adapter.
