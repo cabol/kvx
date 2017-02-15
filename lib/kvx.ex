@@ -2,11 +2,11 @@ defmodule KVX do
   @moduledoc """
   This is a simple/basic in-memory Key/Value Store written in
   [**Elixir**](http://elixir-lang.org/) and using
-  [**Shards**](https://github.com/cabol/shards)
+  [**ExShards**](https://github.com/cabol/ex_shards)
   as default adapter.
 
   Again, **KVX** is a simple library, most of the work
-  is done by **Shards**, and its typical use case might
+  is done by **ExShards**, and its typical use case might
   be as a **Cache**.
 
   ## Adapters
@@ -14,15 +14,15 @@ defmodule KVX do
   **KVX** was designed to be flexible and support multiple
   backends. We currently ship with one backend:
 
-    * `KVX.Bucket.Shards` - uses [Shards](https://github.com/cabol/shards),
+    * `KVX.Bucket.ExShards` - uses [ExShards](https://github.com/cabol/ex_shards),
       to implement the `KVX.Bucket` interface.
 
   **KVX** adapters config might looks like:
 
       config :kvx,
-        adapter: KVX.Bucket.Shards,
+        adapter: KVX.Bucket.ExShards,
         ttl: 43200,
-        shards_mod: :shards,
+        module: ExShards,
         buckets: [
           mybucket1: [
             n_shards: 4
@@ -32,8 +32,8 @@ defmodule KVX do
           ]
         ]
 
-  In case of Shards adapter, run-time options when calling `new/2`
-  function, are the same as `shards:new/2`. E.g.:
+  In case of `ExShards` adapter, run-time options when calling `new/2`
+  function are the same as `ExShards.new/2`. E.g.:
 
       MyModule.new(:mybucket, [n_shards: 4])
 

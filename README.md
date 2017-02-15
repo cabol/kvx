@@ -1,9 +1,9 @@
 # KVX
 
 This is a simple/basic in-memory Key/Value Store written in [**Elixir**](http://elixir-lang.org/)
-and using [**Shards**](https://github.com/cabol/shards) as default adapter.
+and using [**ExShards**](https://github.com/cabol/ex_shards) as default adapter.
 
-Again, **KVX** is a simple library, most of the work is done by **Shards**, and
+Again, **KVX** is a simple library, most of the work is done by **ExShards**, and
 its typical use case might be as a **Cache**.
 
 ## Usage
@@ -12,7 +12,7 @@ Add `kvx` to your Mix dependencies:
 
 ```elixir
 defp deps do
-  [{:kvx, "~> 0.1.2"}]
+  [{:kvx, "~> 0.1"}]
 end
 ```
 
@@ -75,27 +75,27 @@ But there are some common/shared options such as: `:adapter` and `:ttl`. E.g.:
 
 ```elixir
 config :kvx,
-  adapter: KVX.Bucket.Shards,
+  adapter: KVX.Bucket.ExShards,
   ttl: 1
 ```
 
-Now, in case of Shards adapter `KVX.Bucket.Shards`, it has some extra options
-like `:shards_mod`. E.g.:
+Now, in case of the adapter `KVX.Bucket.ExShards`, it has some extra options
+like `module`. E.g.:
 
 ```elixir
 config :kvx,
-  adapter: KVX.Bucket.Shards,
+  adapter: KVX.Bucket.ExShards,
   ttl: 1,
-  shards_mod: :shards
+  module: ExShards.Local
 ```
 
 Besides, you can define bucket options in the config:
 
 ```elixir
 config :kvx,
-  adapter: KVX.Bucket.Shards,
+  adapter: KVX.Bucket.ExShards,
   ttl: 43200,
-  shards_mod: :shards,
+  module: ExShards,
   buckets: [
     mybucket1: [
       n_shards: 4
@@ -106,14 +106,14 @@ config :kvx,
   ]
 ```
 
-In case of Shards adapter, run-time options when calling `new/2` function, are
-the same as `shards:new/2`. E.g.:
+In case of **ExShards** adapter, run-time options when calling `new/2` function, are
+the same as `ExShards.new/2`. E.g.:
 
 ```elixir
 MyModule.new(:mybucket, [n_shards: 4])
 ```
 
- > **NOTE:** For more information check [KVX.Bucket.Shards](./lib/kvx/adapters/shards/bucket_shards.ex).
+ > **NOTE:** For more information check [KVX.Bucket.ExShards](./lib/kvx/adapters/ex_shards/bucket_shards.ex).
 
 ## Running Tests
 
@@ -144,7 +144,7 @@ data access and caching logic. First let's create our bucket and
 the `Ecto.Repo` in two separated modules:
 
 ```elixir
-defmodule MyApp.Cache do
+defmodule MyApp.Bucket do
  use KVX.Bucket
 end
 
@@ -159,7 +159,7 @@ functions but adding caching. It is as simple as this:
 ```elixir
 defmodule MyApp.CacheableRepo do
   alias MyApp.Repo
-  alias MyApp.Cache
+  alias MyApp.Bucket
 
   require Logger
 
@@ -181,12 +181,12 @@ defmodule MyApp.CacheableRepo do
 
   defp get(fun, queryable, key, opts) do
     b = bucket(queryable)
-    case Cache.get(b, key) do
+    case Bucket.get(b, key) do
       nil ->
         value = fun.(queryable, key, opts)
         if value != nil do
           Logger.debug "CACHING <get>: #{inspect key} => #{inspect value}"
-          Cache.set(b, key, value)
+          Bucket.set(b, key, value)
         end
         value
       value ->
@@ -200,7 +200,7 @@ defmodule MyApp.CacheableRepo do
       {:ok, schema} = rs ->
         schema
         |> bucket
-        |> Cache.del(schema.id)
+        |> Bucket.delete(schema.id)
         rs
       error ->
         error
@@ -211,7 +211,7 @@ defmodule MyApp.CacheableRepo do
     rs = Repo.insert!(struct, opts)
     rs
     |> bucket
-    |> Cache.del(rs.id)
+    |> Bucket.delete(rs.id)
     rs
   end
 
@@ -220,7 +220,7 @@ defmodule MyApp.CacheableRepo do
       {:ok, schema} = rs ->
         schema
         |> bucket
-        |> Cache.set(schema.id, schema)
+        |> Bucket.set(schema.id, schema)
         rs
       error ->
         error
@@ -231,7 +231,7 @@ defmodule MyApp.CacheableRepo do
     rs = Repo.update!(struct, opts)
     rs
     |> bucket
-    |> Cache.set(rs.id, rs)
+    |> Bucket.set(rs.id, rs)
     rs
   end
 
@@ -240,7 +240,7 @@ defmodule MyApp.CacheableRepo do
       {:ok, schema} = rs ->
         schema
         |> bucket
-        |> Cache.delete(schema.id)
+        |> Bucket.delete(schema.id)
         rs
       error ->
         error
@@ -251,16 +251,14 @@ defmodule MyApp.CacheableRepo do
     rs = Repo.delete!(struct, opts)
     rs
     |> bucket
-    |> Cache.del(rs.id)
+    |> Bucket.delete(rs.id)
     rs
   end
 
   # function to resolve what bucket depending on the given schema
-  def bucket(MyApp.ModelA), do: :b1
-  def bucket(%MyApp.ModelA{}), do: :b1
-  def bucket(MyApp.ModelB), do: :b2
-  def bucket(%MyApp.ModelB{}), do: :b2
-  def bucket(_), do: :default
+  defp bucket(%{__struct__: struct}), do: Bucket.new(struct)
+  defp bucket(struct) when is_atom(struct), do: Bucket.new(struct)
+  defp bucket(_), do: Bucket.new(:default)
 end
 ```
 

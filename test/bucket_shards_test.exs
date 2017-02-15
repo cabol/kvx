@@ -23,8 +23,8 @@ defmodule KVX.Bucket.ShardsTest do
   end
 
   test "default config" do
-    assert KVX.Bucket.Shards === __adapter__
-    assert 1 === __ttl__
+    assert KVX.Bucket.ExShards === __adapter__()
+    assert 1 === __ttl__()
   end
 
   test "invalid bucket error" do
@@ -118,6 +118,6 @@ defmodule KVX.Bucket.ShardsTest do
   test "load bucket opts from config test" do
     assert :mybucket === new(:mybucket)
     assert 2 === :shards_state.n_shards(:mybucket)
-    assert :shards === KVX.Bucket.Shards.__shards_mod__
+    assert ExShards === KVX.Bucket.ExShards.__ex_shards_mod__
   end
 end

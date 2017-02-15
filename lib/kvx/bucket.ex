@@ -3,9 +3,9 @@ defmodule KVX.Bucket do
   Defines a Bucket.
 
   A bucket maps to an underlying data store, controlled by the
-  adapter. For example, `KVX` ships with a `KVX.Bucket.Shards`
-  adapter that stores data into a `shards` distributed memory
-  storage – [shards](https://github.com/cabol/shards).
+  adapter. For example, `KVX` ships with a `KVX.Bucket.ExShards`
+  adapter that stores data into `ExShards` distributed memory
+  storage – [ExShards](https://github.com/cabol/ex_shards).
 
   For example, the bucket:
 
@@ -16,11 +16,11 @@ defmodule KVX.Bucket do
   Could be configured with:
 
       config :kvx,
-        adapter: KVX.Bucket.Shards,
+        adapter: KVX.Bucket.ExShards,
         ttl: 10
 
-  Most of the configuration that goes into the `config` is specific
-  to the adapter, so check `KVX.Bucket.Shards` documentation for more
+  Most of the configuration that goes into the `config` is specific to
+  the adapter, so check `KVX.Bucket.ExShards` documentation for more
   information. However, some configuration is shared across
   all adapters, they are:
 
@@ -29,8 +29,6 @@ defmodule KVX.Bucket do
 
   Check adapters documentation for more information.
   """
-
-  use Behaviour
 
   @type bucket :: atom
   @type key    :: term
@@ -42,7 +40,7 @@ defmodule KVX.Bucket do
     quote do
       @behaviour KVX.Bucket
 
-      @adapter (Application.get_env(:kvx, :adapter, KVX.Bucket.Shards))
+      @adapter (Application.get_env(:kvx, :adapter, KVX.Bucket.ExShards))
       @default_ttl (Application.get_env(:kvx, :ttl, :infinity))
 
       def __adapter__ do
@@ -105,7 +103,7 @@ defmodule KVX.Bucket do
 
       MyBucket.new(:mybucket)
   """
-  defcallback new(bucket, [term]) :: bucket
+  @callback new(bucket, [term]) :: bucket
 
   ## Storage Commands
 
@@ -119,7 +117,7 @@ defmodule KVX.Bucket do
 
       MyBucket.add(:mybucket, "hello", "world")
   """
-  defcallback add(bucket, key, value, ttl) :: bucket | KVX.ConflictError
+  @callback add(bucket, key, value, ttl) :: bucket | KVX.ConflictError
 
   @doc """
   Most common command. Store this data, possibly overwriting any existing data.
@@ -130,7 +128,7 @@ defmodule KVX.Bucket do
 
       MyBucket.set(:mybucket, "hello", "world")
   """
-  defcallback set(bucket, key, value, ttl) :: bucket
+  @callback set(bucket, key, value, ttl) :: bucket
 
   @doc """
   Store this bulk data, possibly overwriting any existing data.
@@ -141,7 +139,7 @@ defmodule KVX.Bucket do
 
       MyBucket.mset(:mybucket, [{"a": 1}, {"b", "2"}])
   """
-  defcallback mset(bucket, [{key, value}], ttl) :: bucket
+  @callback mset(bucket, [{key, value}], ttl) :: bucket
 
   ## Retrieval Commands
 
@@ -155,7 +153,7 @@ defmodule KVX.Bucket do
 
       MyBucket.get(:mybucket, "hello")
   """
-  defcallback get(bucket, key) :: value | nil
+  @callback get(bucket, key) :: value | nil
 
   @doc """
   Returns the values of all specified keys. For every key that does not hold
@@ -168,12 +166,12 @@ defmodule KVX.Bucket do
 
       MyBucket.mget(:mybucket, ["hello", "world"])
   """
-  defcallback mget(bucket, [key]) :: [value | nil]
+  @callback mget(bucket, [key]) :: [value | nil]
 
   @doc """
   Returns all objects/tuples `{key, value}` that matches with the specified
   `query`. The `query` type/spec depends on each adapter implementation –
-  `:ets.match_spec` in case of `KVX.Bucket.Shards`.
+  `:ets.match_spec` in case of `KVX.Bucket.ExShards`.
 
   If `bucket` doesn't exist, it will raise an argument error.
 
@@ -181,7 +179,7 @@ defmodule KVX.Bucket do
 
       MyBucket.find_all(bucket, Ex2ms.fun do object -> object end)
   """
-  defcallback find_all(bucket, query :: term) :: [{key, value}]
+  @callback find_all(bucket, query :: term) :: [{key, value}]
 
   ## Cleanup functions
 
@@ -194,7 +192,7 @@ defmodule KVX.Bucket do
 
       MyBucket.delete(:mybucket, "hello")
   """
-  defcallback delete(bucket, key) :: bucket
+  @callback delete(bucket, key) :: bucket
 
   @doc """
   Deletes an entire bucket, if it exists.
@@ -205,7 +203,7 @@ defmodule KVX.Bucket do
 
       MyBucket.delete(:mybucket)
   """
-  defcallback delete(bucket) :: bucket
+  @callback delete(bucket) :: bucket
 
   @doc """
   Invalidate all existing cache items.
@@ -216,5 +214,5 @@ defmodule KVX.Bucket do
 
       MyBucket.flush(:mybucket)
   """
-  defcallback flush(bucket) :: bucket
+  @callback flush(bucket) :: bucket
 end

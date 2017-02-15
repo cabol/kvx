@@ -4,7 +4,7 @@ use Mix.Config
 
 # KVX config
 config :kvx,
-  adapter: KVX.Bucket.Shards
+  adapter: KVX.Bucket.ExShards
 
 # Import environment specific config.
 import_config "#{Mix.env}.exs"

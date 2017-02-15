@@ -1,27 +1,27 @@
-defmodule KVX.Bucket.Shards do
+defmodule KVX.Bucket.ExShards do
   @moduledoc """
-  Shards adapter. This is the default adapter supported by `KVX`.
-  Shards adapter only works with `set` and `ordered_set` table types.
+  ExShards adapter. This is the default adapter supported by `KVX`.
+  ExShards adapter only works with `set` and `ordered_set` table types.
 
-  Shards extra config options:
+  ExShards extra config options:
 
-    * `:shards_mod` - internal Shards module to use. By default, `:shards`
-       module is used, which is a wrapper on top of `:shards_local` and
-       `:shards_dist`.
+    * `:module` - internal ExShards module to use. By default, `ExShards`
+       module is used, which is a wrapper on top of `ExShards.Local` and
+       `ExShards.Dist`.
     * `:buckets` - this can be used to set bucket options in config,
       so it can be loaded when the bucket is created. See example below.
 
   Run-time options when calling `new/2` function, are the same as
-  `shards:new/2`. For example:
+  `ExShards.new/2`. For example:
 
       MyModule.new(:mybucket, [n_shards: 4])
 
   ## Example:
 
       config :kvx,
-        adapter: KVX.Bucket.Shards,
+        adapter: KVX.Bucket.ExShards,
         ttl: 43200,
-        shards_mod: :shards,
+        module: ExShards,
         buckets: [
           mybucket1: [
             n_shards: 4
@@ -31,15 +31,16 @@ defmodule KVX.Bucket.Shards do
           ]
         ]
 
-  For more information about `shards`:
+  For more information about `ExShards`:
 
+    * [GitHub](https://github.com/cabol/ex_shards)
     * [GitHub](https://github.com/cabol/shards)
     * [Blog Post](http://cabol.github.io/posts/2016/04/14/sharding-support-for-ets.html)
   """
 
   @behaviour KVX.Bucket
 
-  @shards (Application.get_env(:kvx, :shards_mod, :shards))
+  @mod (Application.get_env(:kvx, :module, ExShards))
   @default_ttl (Application.get_env(:kvx, :ttl, :infinity))
 
   require Ex2ms
@@ -55,7 +56,7 @@ defmodule KVX.Bucket.Shards do
 
   defp new_bucket(bucket, opts) do
     opts = maybe_get_bucket_opts(bucket, opts)
-    @shards.new(bucket, opts)
+    @mod.new(bucket, opts)
   end
 
   defp maybe_get_bucket_opts(bucket, []) do
@@ -75,8 +76,7 @@ defmodule KVX.Bucket.Shards do
   end
 
   def set(bucket, key, value, ttl \\ @default_ttl) do
-    true = @shards.insert(bucket, {key, value, seconds_since_epoch(ttl)})
-    bucket
+    @mod.set(bucket, {key, value, seconds_since_epoch(ttl)})
   end
 
   def mset(bucket, entries, ttl \\ @default_ttl) when is_list(entries) do
@@ -89,12 +89,12 @@ defmodule KVX.Bucket.Shards do
   ## Retrieval Commands
 
   def get(bucket, key) do
-    case @shards.lookup(bucket, key) do
+    case @mod.lookup(bucket, key) do
       [{^key, value, ttl}] ->
         if ttl > seconds_since_epoch(0) do
           value
         else
-          true = @shards.delete(bucket, key)
+          true = @mod.delete(bucket, key)
           nil
         end
       _ ->
@@ -117,13 +117,13 @@ defmodule KVX.Bucket.Shards do
   end
   defp do_find_all(bucket, query) do
     bucket
-    |> @shards.select(query)
+    |> @mod.select(query)
     |> Enum.reduce([], fn({k, v, ttl}, acc) ->
       case ttl > seconds_since_epoch(0) do
         true ->
           [{k, v} | acc]
         _ ->
-          true = @shards.delete(bucket, k)
+          true = @mod.delete(bucket, k)
           acc
       end
     end)
@@ -132,23 +132,23 @@ defmodule KVX.Bucket.Shards do
   ## Cleanup functions
 
   def delete(bucket, key) do
-    true = @shards.delete(bucket, key)
+    true = @mod.delete(bucket, key)
     bucket
   end
 
   def delete(bucket) do
-    true = @shards.delete(bucket)
+    true = @mod.delete(bucket)
     bucket
   end
 
   def flush(bucket) do
-    true = @shards.delete_all_objects(bucket)
+    true = @mod.delete_all_objects(bucket)
     bucket
   end
 
   ## Extended functions
 
-  def __shards_mod__, do: @shards
+  def __ex_shards_mod__, do: @mod
 
   def __default_ttl__, do: @default_ttl
 
