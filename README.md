@@ -40,25 +40,25 @@ Now let's play with `kvx`:
 > MyTestMod.new(:mybucket)
 :mybucket
 
-> MyTestMod.set(:mybucket, :k1, 1)
+> MyTestMod.set(:mybucket, :fruit, "banana")
 :mybucket
 
-> MyTestMod.mset(:mybucket, k2: 2, k3: "3")
+> MyTestMod.mset(:mybucket, male_users: 200, female_users: 150)
 :mybucket
 
-> MyTestMod.get(:mybucket, :k1)
-1
+> MyTestMod.get(:mybucket, :female_users)
+150
 
-> MyTestMod.mget(:mybucket, [:k2, :k3])
-[2, "3"]
+> MyTestMod.mget(:mybucket, [:male_users, :female_users])
+[200, 150]
 
 > MyTestMod.find_all(:mybucket)
-[k3: "3", k2: 2, k1: 1]
+[fruit: "banana", male_users: 200, female_users: 150]
 
-> MyTestMod.delete(:mybucket, :k1)
+> MyTestMod.delete(:mybucket, :male_users)
 :mybucket
 
-> MyTestMod.get(:mybucket, :k1)
+> MyTestMod.get(:mybucket, :male_users)
 nil
 
 > MyTestMod.flush!(:mybucket)
