@@ -76,7 +76,7 @@ But there are some common/shared options such as: `:adapter` and `:ttl`. E.g.:
 ```elixir
 config :kvx,
   adapter: KVX.Bucket.ExShards,
-  ttl: 1
+  ttl: 1  # the ttl in seconds
 ```
 
 Now, in case of the adapter `KVX.Bucket.ExShards`, it has some extra options
@@ -85,7 +85,7 @@ like `module`. E.g.:
 ```elixir
 config :kvx,
   adapter: KVX.Bucket.ExShards,
-  ttl: 1,
+  ttl: 1,  # the ttl in seconds
   module: ExShards.Local
 ```
 
@@ -94,7 +94,7 @@ Besides, you can define bucket options in the config:
 ```elixir
 config :kvx,
   adapter: KVX.Bucket.ExShards,
-  ttl: 43200,
+  ttl: 43200, # the ttl in seconds
   module: ExShards,
   buckets: [
     mybucket1: [
